@@ -1,5 +1,5 @@
 // 九九道場：一度ひらけば 通信がなくても動く（つながる時は いつも新しい版を取りにいく）
-var CACHE = 'kuku-dojo-571484e41b';
+var CACHE = 'kuku-dojo-5d0295b590';
 var FILES = ['./', 'index.html', 'images.js', 'manifest.json', 'icon-180.png', 'icon-192.png', 'icon-512.png'];
 self.addEventListener('install', function (e) {
   e.waitUntil(caches.open(CACHE).then(function (c) { return c.addAll(FILES); }).then(function () { return self.skipWaiting(); }));

@@ -76,6 +76,14 @@ button { font-family: inherit; cursor: pointer; border: none; color: inherit; }
 .fk-len { text-align: center; font-weight: 800; margin: -6px 0 8px; }
 .c-fk { background: linear-gradient(135deg, #c9a227, #7a5a0c); }
 .fk-home { font-size: 15px; }
+.web-annai { position: relative; width: min(520px, calc(100vw - 32px)); box-sizing: border-box; background: #fff4e6; border: 3px solid #e07a2f; border-radius: 14px; padding: 12px 14px 10px; box-shadow: 0 4px 12px rgba(0,0,0,.35); color: #3a2410; }
+.web-annai .wa-t { font-weight: 900; font-size: 18px; margin: 0 26px 4px 0; }
+.web-annai .wa-d { font-size: 15px; line-height: 1.5; }
+.web-annai .wa-btns { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 10px 0 6px; }
+.web-annai .wa-go { display: inline-block; background: #e07a2f; color: #fff; font-weight: 900; font-size: 16px; padding: 9px 16px; border-radius: 12px; text-decoration: none; box-shadow: 0 3px 8px rgba(0,0,0,.3); }
+.web-annai .wa-s { font-size: 13px; line-height: 1.45; color: #6b4a2a; }
+.web-annai .wa-x { position: absolute; right: 6px; top: 4px; border: 0; background: none; font-size: 22px; font-weight: 900; color: #8a5a2a; width: 36px; height: 36px; }
+
 .t-big { display: block; width: 100%; text-align: left; background: linear-gradient(180deg, #fff, #f3e6c8); border: 3px solid var(--wood); border-radius: 14px; padding: 12px 14px; font-size: 20px; font-weight: 900; margin-top: 10px; box-shadow: 0 4px 0 var(--wood-d); }
 .t-big span { display: block; font-size: 14px; color: #6b4a2a; margin-top: 2px; }
 .t-big:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--wood-d); }
@@ -394,6 +402,32 @@ button { font-family: inherit; cursor: pointer; border: none; color: inherit; }
   .stage .sensei img { width: 70px; }
   .choice { padding: 6px 4px; }
 }
+/* 2026-11-25 縦が短い画面（Googleの帯つき・iPad横・ノートPC）で、札やキーのいちばん下の段が画面の外に切れていた。
+   札とキーは のこりの高さに おさまるように ちぢめる。それでも入らないときは 画面をスクロールできる */
+.play-wrap { overflow-y: auto; }
+.stage { flex-shrink: 0; margin: clamp(4px, 2vh, 16px) 0 clamp(2px, .8vh, 6px); min-height: clamp(56px, 14vh, 110px); }
+.stage .sensei img { width: clamp(52px, min(15vw, 15vh), 130px); }
+.qbox { flex-shrink: 0; padding: clamp(4px, 1.2vh, 10px) 14px; }
+.qtext { font-size: clamp(30px, min(9vw, 9.5vh), 76px); }
+#play .choices, #play .keypad { flex: 0 1 auto; min-height: 0; margin-top: clamp(6px, 1.6vh, 12px); gap: clamp(6px, 1.4vh, 10px); }
+#play .choices { grid-template-rows: repeat(3, minmax(0, 1fr)); }
+#play .keypad { grid-template-rows: repeat(4, minmax(0, 1fr)); }
+#play .choice { min-height: 0; font-size: clamp(20px, min(5.5vw, 6vh), 40px); padding: clamp(2px, 1.2vh, 10px) 4px; }
+#play .choice.small { font-size: clamp(16px, min(4.4vw, 4.8vh), 30px); }
+#play .key { aspect-ratio: auto; min-height: 0; padding: clamp(2px, 1.6vh, 14px) 0; font-size: clamp(22px, 5vh, 34px); }
+#play .key.go { font-size: clamp(16px, 3.6vh, 24px); }
+/* スマホ幅の師範戦：吹き出しが縦に細くつぶれ、札が画面の下へ押し出されていた */
+.quit { white-space: nowrap; }
+@media (max-width: 560px) {
+  .timer { font-size: 18px; min-width: 0; padding: 4px 8px; }
+  .stage .sensei { flex: 1 1 auto; min-width: 0; }
+  .stage .bubble { flex: 1 1 auto; min-width: 0; }
+  .boss-zone { flex-shrink: 0; }
+  .boss-zone img { height: clamp(64px, 15vh, 130px); max-width: 30vw; }
+  .boss-name { font-size: 14px; }
+  .hp { width: 100px; height: 14px; }
+  .hearts { font-size: 20px; }
+}
 </style>
 </head>
 <body>
@@ -409,6 +443,7 @@ button { font-family: inherit; cursor: pointer; border: none; color: inherit; }
   <div class="home-dim"></div><div class="home-art" id="homeArt"></div>
   <div class="home-chars"><img id="hc1" alt=""><img id="hc2" alt=""><img id="hc3" alt=""></div>
   <div class="home-in">
+    <div class="web-annai" id="webAnnai" style="display:none"></div>
     <div class="dojo-name" id="dojoName" style="display:none"></div>
     <button class="big-btn" onclick="tapStart()">入門する</button>
     <button class="chip-btn fk-home" onclick="askFukkatsu()">🔑 ふっかつの数字で つづきから</button>
@@ -783,6 +818,7 @@ window.addEventListener('DOMContentLoaded', function () {
 function ready() {
   paintImages();
   paintDojoName();
+  paintWebAnnai();
   show('home');
   if (S.joinMsg) { toast(S.joinMsg, 3000); S.joinMsg = null; }
   if (S.pendingCode) { var pc = S.pendingCode; S.pendingCode = null; askSwitch(pc); }
@@ -794,6 +830,30 @@ function paintDojoName() {
   $('codeBtn').textContent = S.cls ? '🏫 クラス ' + S.cls.code : '🏫 先生のコード';
   $('teacherBtn').style.display = S.cls ? 'none' : '';
   if (window.__WEB__) $('codeBtn').style.display = 'none';
+}
+/* ---------- Web版への案内（2026-11-25 利用者DM「後日使うと記録が消えることがある」）----------
+   Google版は Googleの別の場所の枠の中で動くので、iPad・iPhone・Mac の Safari は ときどき 記録を すてる。
+   Google版を Apple の端末で開いたときだけ、ホームに Web版への案内を出す。Web版・ほかの端末には出さない */
+var WEB_URL = 'https:' + '/' + '/kawaitomohiro.github.io/kuku-dojo/';
+function isApple() {
+  if (window.__TEST_APPLE) return true;
+  var u = navigator.userAgent || '';
+  if (/iPad|iPhone|iPod/.test(u)) return true;
+  if (/Macintosh/.test(u) && navigator.maxTouchPoints > 1) return true;
+  return /Safari/.test(u) && !/Chrome|Chromium|CriOS|Edg|Firefox|FxiOS/.test(u);
+}
+function paintWebAnnai() {
+  var box = $('webAnnai');
+  if (!box) return;
+  if (window.__WEB__ || !HAS_SERVER || !isApple() || S.webAnnaiOff) { box.style.display = 'none'; return; }
+  var h = '<button class="wa-x" onclick="sKa();S.webAnnaiOff=true;paintWebAnnai()" aria-label="とじる">×</button>';
+  h += '<div class="wa-t">この ページでは 記録が きえることが あるぞ</div>';
+  h += '<div class="wa-d">iPad・iPhone では、日を あけて ひらくと はじめに もどることが ある。記録が のこる あたらしい ページで 修行しよう。</div>';
+  h += '<div class="wa-btns"><button class="chip-btn" onclick="sKa();openFukkatsu()">🔑 いまの記録の 数字を見る</button>';
+  h += '<a class="wa-go" href="' + esc(WEB_URL) + '" target="_blank" rel="noopener">あたらしい ページを ひらく</a></div>';
+  h += '<div class="wa-s">先に「ふっかつの数字」を ノートに書き、あたらしいページで 入れると、帯や巻物を つづきから はじめられる。' + (S.cls ? '（先生のコードの しばりは、あたらしいページには ありません）' : '') + '</div>';
+  box.innerHTML = h;
+  box.style.display = '';
 }
 /* クラスコード：リンクの ?dojo= ＞ 端末の控え。サーバーで今の指定を読む */
 function storedClass() {
